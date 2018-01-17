@@ -1,80 +1,140 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import ActualBall from './actual-ball';
 import GridBall from './grid-ball';
 
 class Bingo extends Component {
+  letters = ['B', 'I', 'N', 'G', 'O'];
+
+  numbersByLetter = 15;
+
+  balls = [];
+
+  bingoInit = {
+    actualBall: { letter: '', number: '' },
+    already: []
+  };
+
   constructor(props) {
     super(props);
-    this.letters = ['B','I','N','G','O'];
+    let total = 1;
+    for (let i = 1; i <= this.letters.length; i++) {
+      let arr = [];
+      let j = 1;
+      for (;j <= this.numbersByLetter; j++) {
+        arr.push(total);
+        total++;
+      }
+      this.balls.push(arr);
+    }
+    let balls = [];
+    for (let i = 1; i <= this.letters.length * this.numbersByLetter; i++) {
+      balls.push(i);
+    }
+    this.bingoInit.balls = balls;
 
-    this.state = {
-      actualBall: {letter: '', number: ''},
-      already: [],
-      balls: [
-        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,
-        16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,
-        31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,
-        46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,
-        61,62,63,64,65,66,67,68,69,70,71,72,73,74,75
-      ]
-    };
+    const bingo = JSON.parse(localStorage.getItem('bingo'));
+
+    if (typeof bingo === 'object' && bingo.balls !== []) {
+      this.state = {
+        actualBall: bingo.actualBall,
+        already: bingo.already,
+        balls: bingo.balls,
+      };
+    } else {
+      localStorage.setItem('bingo', JSON.stringify(this.bingoInit));
+
+      this.state = this.bingoInit;
+    }
+
     this.pickBall = this.pickBall.bind(this);
-    this.notInBalls = this.notInBalls.bind(this);
+    this.notInAlready = this.notInAlready.bind(this);
+    this.setBalls = this.setBalls.bind(this);
+    this.resetBalls = this.resetBalls.bind(this);
   }
 
   pickBall() {
     let actualBall = this.state.balls[Math.floor(Math.random() * this.state.balls.length)];
     let letter = this.setLetter(actualBall);
     let index = this.state.balls.indexOf(actualBall);
-    let balls = this.state.balls;
-    balls.splice(index, 1);
+    if (index !== -1) {
+      let balls = this.state.balls;
+      balls.splice(index, 1);
 
-    this.setState({
-      already: this.state.already.concat(actualBall),
-      actualBall: {letter: letter, number: actualBall},
-      balls: balls
-    });
+      const bingo = {
+        actualBall: { letter: letter, number: actualBall },
+        already: this.state.already.concat(actualBall),
+        balls: balls,
+      };
+
+      this.setBalls(bingo);
+    }
   }
 
   setLetter(number) {
-    let letter = '';
-
-    if (0 < number && number < 16) {
-      letter = 'B';
-    }
-    if (15 < number && number < 31) {
-      letter = 'I';
-    }
-    if (30 < number && number < 46) {
-      letter = 'N';
-    }
-    if (45 < number && number < 61) {
-      letter = 'G';
-    }
-    if (60 < number && number < 76) {
-      letter = 'O';
-    }
-
-    return letter;
+    return this.letters.find((letter, index) => {
+      if (this.balls[index].indexOf(number) !== -1) {
+        if (this.letters[index] !== undefined) {
+          return this.letters[index];
+        }
+      }
+    });
   }
 
-  notInBalls(ball) {
+  notInAlready(ball) {
     let print = '';
-    if (this.state.balls.indexOf(ball) === -1) {
+    if (this.state.already.indexOf(ball) !== -1) {
       print = ball;
     }
 
     return print;
   }
 
+  setBalls(bingo) {
+    localStorage.setItem('bingo', JSON.stringify(bingo));
+
+    this.setState(() => ({
+      actualBall: bingo.actualBall,
+      already: bingo.already,
+      balls: bingo.balls,
+    }));
+  }
+
+  resetBalls() {
+    let init = {
+      actualBall: { letter: '', number: '' },
+      already: [],
+      balls: balls
+    };
+    localStorage.setItem('bingo', JSON.stringify(init));
+    let balls = [];
+    for (let i = 1; i <= this.letters.length * this.numbersByLetter; i++) {
+      balls.push(i);
+    }
+
+    this.setState(() => ({
+      actualBall: { letter: '', number: '' },
+      already: [],
+      balls: balls
+    }));
+  }
+
   render() {
     return (
       <div className="container">
         <h3 className="text-center">BINGO</h3>
-        <ActualBall pickBall={this.pickBall} actualBall={this.state.actualBall}/>
+        <ActualBall
+          pickBall={this.pickBall}
+          actualBall={this.state.actualBall}
+          resetBalls={this.resetBalls}
+        />
         <div className="row">&nbsp;</div>
         <div className="row">&nbsp;</div>
-        <GridBall notInBalls={this.notInBalls}/>
+        <GridBall
+          notInAlready={this.notInAlready}
+          already={this.state.already}
+          balls={this.balls}
+          letters={this.letters}
+        />
       </div>
     );
   }
