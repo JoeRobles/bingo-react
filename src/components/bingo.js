@@ -3,12 +3,10 @@ import ActualBall from './actual-ball';
 import GridBall from './grid-ball';
 
 class Bingo extends Component {
+  localItem = this.localItem;
   letters = ['B', 'I', 'N', 'G', 'O'];
-
   numbersByLetter = 15;
-
   balls = [];
-
   bingoInit = {
     actualBall: { letter: '', number: '' },
     already: []
@@ -32,16 +30,18 @@ class Bingo extends Component {
     }
     this.bingoInit.balls = balls;
 
-    const bingo = JSON.parse(localStorage.getItem('bingo'));
-
-    if (typeof bingo === 'object' && bingo.balls !== []) {
-      this.state = {
-        actualBall: bingo.actualBall,
-        already: bingo.already,
-        balls: bingo.balls,
-      };
+    let stored = localStorage.getItem(this.localItem);
+    if (stored !== null) {
+      const bingo = JSON.parse(stored);
+      if (typeof bingo === 'object' && bingo.balls !== []) {
+        this.state = {
+          actualBall: bingo.actualBall,
+          already: bingo.already,
+          balls: bingo.balls,
+        };
+      }
     } else {
-      localStorage.setItem('bingo', JSON.stringify(this.bingoInit));
+      localStorage.setItem(this.localItem, JSON.stringify(this.bingoInit));
 
       this.state = this.bingoInit;
     }
@@ -90,7 +90,7 @@ class Bingo extends Component {
   }
 
   setBalls(bingo) {
-    localStorage.setItem('bingo', JSON.stringify(bingo));
+    localStorage.setItem(this.localItem, JSON.stringify(bingo));
 
     this.setState(() => ({
       actualBall: bingo.actualBall,
@@ -100,16 +100,17 @@ class Bingo extends Component {
   }
 
   resetBalls() {
+    let balls = [];
+    for (let i = 1; i <= this.letters.length * this.numbersByLetter; i++) {
+      balls.push(i);
+    }
     let init = {
       actualBall: { letter: '', number: '' },
       already: [],
       balls: balls
     };
-    localStorage.setItem('bingo', JSON.stringify(init));
-    let balls = [];
-    for (let i = 1; i <= this.letters.length * this.numbersByLetter; i++) {
-      balls.push(i);
-    }
+
+    localStorage.setItem(this.localItem, JSON.stringify(init));
 
     this.setState(() => ({
       actualBall: { letter: '', number: '' },
