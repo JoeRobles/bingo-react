@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ActualBall from './actual-ball';
 import GridBall from './grid-ball';
+import database from '../firebase'
 
 class Bingo extends Component {
   localItem = this.localItem;
@@ -31,6 +32,12 @@ class Bingo extends Component {
     this.bingoInit.balls = balls;
 
     let stored = localStorage.getItem(this.localItem);
+    database.ref().once('value')
+      .then(function(snapshot) {
+        console.log('snapshot');
+        console.log(snapshot.val());
+      });
+
     if (stored !== null) {
       const bingo = JSON.parse(stored);
       if (typeof bingo === 'object' && bingo.balls !== []) {
